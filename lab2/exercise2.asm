@@ -2,8 +2,8 @@
 ; Name: <Collier, Craig>
 ; Username: ccoll010
 ; 
-; Lab: <lab 1>
-; Lab section: 221
+; Lab: <lab 2>
+; Lab section: 23
 ; TA: Bryan Marsh
 ; 
 ;=================================================
@@ -11,10 +11,11 @@
 ; Instructions
 	LDI R3, DEC_65
 	LDI R4, HEX_41
-	ADD R3, #1, R3
-	ADD R4, #1, R3
+	ADD R3, R3, #1 
+	ADD R4, R4, #1
 	STI R3, DEC_65
 	STI R4, HEX_41
+    HALT
 ; Data
 
 	DEC_65 .FILL x4000

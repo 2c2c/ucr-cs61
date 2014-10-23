@@ -2,8 +2,8 @@
 ; Name: <Collier, Craig>
 ; Username: ccoll010
 ; 
-; Lab: <lab 1>
-; Lab section: 221
+; Lab: <lab 2>
+; Lab section: 23
 ; TA: Bryan Marsh
 ; 
 ;=================================================
@@ -11,6 +11,7 @@
 ; Instructions
 	LD R3, DEC_65
 	LD R4, HEX_41
+    HALT
 
 ; Data
 

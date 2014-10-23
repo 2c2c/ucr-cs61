@@ -2,8 +2,8 @@
 ; Name: <Collier, Craig>
 ; Username: ccoll010
 ; 
-; Lab: <lab 1>
-; Lab section: 221
+; Lab: <lab 2>
+; Lab section: 23
 ; TA: Bryan Marsh
 ; 
 ;=================================================
@@ -12,11 +12,13 @@
 	LD R0, HEX_61
 	LD R1, HEX_1A
 WHILE
-	PUT R0
-	ADD R0, #1, R0
-	ADD R1, #-1, R1
+	OUT
+	ADD R0, R0, #1
+	ADD R1, R1, #-1
 	BRp WHILE
 ENDWHILE
+
+HALT
 
 ;data
 	HEX_61	.FILL	x61
