@@ -26,6 +26,8 @@
     LEA R6, ARRAY
 
     DO_WHILE_2
+       LD R0, SPACE
+       OUT
        LDR R0, R6, #0
        OUT
        ADD R6,R6, #1
@@ -34,7 +36,8 @@
     HALT
 
     ;data
+    SPACE .FILL x0A
     DEC_10 .FILL #10
     ARRAY .BLKW #10
-    PROMPT .STRINGZ "type 10 chars"
+    PROMPT .STRINGZ "type 10 chars\n"
 .end
