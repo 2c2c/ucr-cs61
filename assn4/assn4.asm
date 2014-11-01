@@ -44,13 +44,13 @@
         LD R6,MINUS_FLAG
         GETC
         OUT
-        BR ENTERLOOP
+        BR BEGINLOOP
     PLUSCASE
         GETC
         OUT
-        BR ENTERLOOP
+        BR BEGINLOOP
     PROCEED
-        BR ENTERLOOP
+        BR BEGINLOOP
     IN_WHILE
         ;when entering the loop skip getting input
         ;since im handling + - outside of loop
@@ -59,9 +59,11 @@
         GETC
         OUT
         ;starts here first iter
-        ENTERLOOP
+        BEGINLOOP
         ;enter
         LD R3,ENTER
+        NOT R4,R0
+        ADD R4,R4,#1
         ADD R1,R4,R3
         BRz ENTERCASE
         ;if it isnt + - or enter check if the value is >9 or <0
@@ -134,9 +136,9 @@ DEC_5 .FILL #5
 PROMPT .STRINGZ "Input 16bit int\n"
 ERROR_MSG .STRINGZ "Invalid input\n"
 MINUSSIGN .FILL '-'
-PLUSSIGN .FILL x2B
+PLUSSIGN .FILL '+'
 MINUS_FLAG .FILL #1
-ENTER .FILL xA
+ENTER .FILL '\n'
 DEC_0 .FILL #0
 UPPER_LIM .FILL -x3A
 LOWER_LIM .FILL -x2
