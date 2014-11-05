@@ -1,0 +1,80 @@
+
+OUTPUT_BINARY_3200
+
+.orig x3200
+;store original state
+ST R0 BACKUP_R0_3200
+ST R1 BACKUP_R1_3200
+ST R2 BACKUP_R2_3200
+ST R3 BACKUP_R3_3200
+ST R4 BACKUP_R4_3200
+ST R5 BACKUP_R5_3200
+ST R6 BACKUP_R6_3200
+ST R7 BACKUP_R7_3200
+
+;algorithm
+LD R2,POINTER
+LD R3,HIGH_BIT
+LD R0,CHAR_B
+LDR R1,R2,#0
+LD R6,FOUR
+OUT
+;output contents of actual array value loop 
+FOR_EACH
+  ; and 6he value
+  ; take the result of that and take its 2s compliment
+  ; subtract the finished result against the array
+  ; if that results in 0 it means that the two were equal
+  AND R4,R1,R3
+  NOT R4,R4
+  ADD R4,R4,#1 
+  ADD R4,R3,R4
+  BRnp ZEROBIT
+  ONEBIT
+    LD R0,ONE
+    OUT
+    BR DONE
+  ZEROBIT
+    LD R0,ZERO
+    OUT 
+    BR DONE
+  DONE
+  ; check for 4 iterations and add space
+  ADD R6,R6,#-1
+  BRnp NOSPACE
+  LD R0,SPACE
+  OUT
+  LD R6,FOUR
+  NOSPACE 
+
+  ADD R1,R1,R1
+  ADD R2,R2,#-1
+BRnp FOR_EACH
+
+;reload original data
+LD R0 BACKUP_R0_3200
+LD R1 BACKUP_R1_3200
+LD R2 BACKUP_R2_3200
+LD R3 BACKUP_R3_3200
+LD R4 BACKUP_R4_3200
+LD R5 BACKUP_R5_3200
+LD R6 BACKUP_R6_3200
+LD R7 BACKUP_R7_3200
+
+;backup data
+BACKUP_R1_3200 .FILL #1
+BACKUP_R2_3200 .FILL #1
+BACKUP_R3_3200 .FILL #1
+BACKUP_R4_3200 .FILL #1
+BACKUP_R5_3200 .FILL #1
+BACKUP_R6_3200 .FILL #1
+BACKUP_R7_3200 .FILL #1
+POINTER .FILL x4000
+CHAR_B .FILL x62
+HIGH_BIT .FILL x8000
+
+;vv from assn3 vv
+ZERO .FILL x30
+ONE .FILL x31
+SPACE .FILL x20
+FOUR .FILL #4
