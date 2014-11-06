@@ -12,40 +12,40 @@
 ;Main
 ;=================================================
 .orig x3000
-LD R1,DEC_1
+LD R2,DEC_1
 LD R5,POINTER
 LD R4,DEC_10
 
 ;store values in array
 INPUT_WHILE
-    STR R1,R5,#0
+    STR R2,R5,#0
     ADD R5,R5,#1
-    ADD R1,R1,R1
+    ADD R2,R2,R2
     ADD R4,R4,#-1
     BRnp INPUT_WHILE
 
 ;array iteration loop
 LD R5,DEC_10
-LD R2,POINTER
+LD R1,POINTER
 OUTPUT_WHILE
-    LDR R1,R2,#0
+    LDR R2,R1,#0
     LD R6,FOUR
     ; For each element in array
     ; AND to check if it shares its 1
     ; bit with the value. if it does
     ; print 1, else print 0
     LD R3,HIGH_BIT
-    LD R2,POINTER
+    LD R1,POINTER
 
     
     JSR OUTPUT_BINARY_3200
     LD R0,NEWLINE
     OUT
     ADD R5,R5,#-1
-    ;refill R2 with pointer
-    LD R2,POINTER
-    ADD R2,R2,#1
-    ST R2,POINTER
+    ;refill R1 with pointer
+    LD R1,POINTER
+    ADD R1,R1,#1
+    ST R1,POINTER
     ;zero check
     ADD R5,R5,#0
     BRnp OUTPUT_WHILE
@@ -79,14 +79,14 @@ ARRAY .BLKW #10
 OUTPUT_BINARY_3200
 ;-------------------------
 ; Subroutine OUTPUT_BINARY_3200
-; PARAMS: R2
+; PARAMS: R1
 ; Post Conditions: Output single element of array in binary
 ; Returns: none
 ;
 ;store original state
 ST R0,BACKUP_R0_3200
-ST R1,BACKUP_R1_3200
 ST R2,BACKUP_R2_3200
+ST R1,BACKUP_R1_3200
 ST R3,BACKUP_R3_3200
 ST R4,BACKUP_R4_3200
 ST R5,BACKUP_R5_3200
@@ -94,10 +94,10 @@ ST R6,BACKUP_R6_3200
 ST R7,BACKUP_R7_3200
 
 ;algorithm
-;load from pointer R2 first
-LDR R1,R2,#0
-;reuse R2 as #16 for increment
-LD R2,DEC_16_3200
+;load from pointer R1 first
+LDR R2,R1,#0
+;reuse R1 as #16 for increment
+LD R1,DEC_16_3200
 LD R0,CHAR_B_3200
 LD R6,FOUR_3200
 OUT
@@ -108,7 +108,7 @@ FOR_EACH
   ; subtract the finished result against the array
   ; if that results in 0 it means that the two were equal
   LD R3,HIGH_BIT_3200
-  AND R4,R1,R3
+  AND R4,R2,R3
   NOT R4,R4
   ADD R4,R4,#1 
   ADD R4,R3,R4
@@ -130,14 +130,14 @@ FOR_EACH
   LD R6,FOUR_3200
   NOSPACE_3200 
 
-  ADD R1,R1,R1
-  ADD R2,R2,#-1
+  ADD R2,R2,R2
+  ADD R1,R1,#-1
 BRnp FOR_EACH
 
 ;reload original data
 LD R0,BACKUP_R0_3200
-LD R1,BACKUP_R1_3200
 LD R2,BACKUP_R2_3200
+LD R1,BACKUP_R1_3200
 LD R3,BACKUP_R3_3200
 LD R4,BACKUP_R4_3200
 LD R5,BACKUP_R5_3200
@@ -151,8 +151,8 @@ RET
 
 ;backup data
 BACKUP_R0_3200 .FILL #1
-BACKUP_R1_3200 .FILL #1
 BACKUP_R2_3200 .FILL #1
+BACKUP_R1_3200 .FILL #1
 BACKUP_R3_3200 .FILL #1
 BACKUP_R4_3200 .FILL #1
 BACKUP_R5_3200 .FILL #1
