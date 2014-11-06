@@ -30,184 +30,43 @@ SUB_BINOUT_3200  .FILL x3200
 ; SUB_BINOUT_3200
 ; input: none
 ; postconditions: asks for input in binary form, converts to dec, reoutputs in bin
-; output: none
+; output: R2 <- DEC value of two input digits
 ;=================================================
 .orig x3200
 SUB_BINOUT_3200
 
+;backup
 ST R7,R7_BACKUP
 
-LD R0,ZERO
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-
+AND R2,R2,#0
 GETC
 OUT
-ADD R1,R0,#0
-GETC
-OUT
+;convert to dec
+LD R1,ASCII
+ADD R0,R0,R1
+;straightline mult by 10
+ADD R2,R2,#0
 ADD R2,R0,#0
+ADD R0,R0,R0
+ADD R2,R2,R2
+ADD R2,R2,R2
+ADD R2,R2,R2
+ADD R0,R0,R2
 
-ADD R3,R1,-#2
-BRz TWENTY
-AND R3,R3,#0
-ADD R3,R1,#-1
-BRz ONEX
-BR ZEROX
-ZEROX
-    OUT
-    AND R3,R3,#0
-    ADD R3,R2,#-8
-    BRz ZEROZERO
-    AND R3,R3,#0
-    ADD R3,R2,#-7
-    BRz ZEROONE
-    AND R3,R3,#0
-    ADD R3,R2,#-6
-    BRz ZEROTWO
-    AND R3,R3,#0
-    ADD R3,R2,#-5
-    BRz ZEROTHREE
-    AND R3,R3,#0
-    ADD R3,R2,#-4
-    BRz ZEROFOUR
-    AND R3,R3,#0
-    ADD R3,R2,#-3
-    BRz ZEROFIVE
-    AND R3,R3,#0
-    ADD R3,R2,#-2
-    BRz ZEROSIX
-    AND R3,R3,#0
-    ADD R3,R2,#-1
-    BRz ZEROSEVEN
-    AND R3,R3,#0
-    ADD R3,R2,#0
-    BRz ZEROEIGHT
-ONEX
-    AND R3,R3,#0
-    ADD R3,R1,#-6
-    BRnz LESS
-    BRp MORE
-LESS
-    LD R0,ZERO
-    ZEROX
-MORE
-    LD R0,ONE
-    ZEROX
-
-ZEROONE
-LD R0,ZERO
+GETC
 OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-LD R1,ONE
-OUT
-
-ZEROTWO
-LD R0,ZERO
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-LD R0,ONE
-OUT
-LD R0,ZERO
-OUT
+;convert to dec
+ADD R0,R0,R1
+ADD R2,R2,R0
 
 
-ZEROTHREE
-LD R0,ZERO
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-LD R0,ONE
-OUT
-OUT
-
-ZEROFOUR
-LD R0,ZERO
-OUT
-OUT
-OUT
-OUT
-OUT
-LD R0,ONE
-OUT
-LD R0,ZERO  
-OUT
-OUT
-ZERFIVE
-LD R0,ZERO
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-LD R1,ONE
-OUT
-ZEROONE
-LD R0,ZERO
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-OUT
-LD R1,ONE
-OUT
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+;restore
 LD R7,R7_BACKUP
+;return
 RET
 
 R7_BACKUP .FILL #1
 ZERO    .FILL   #'0'
 ONE    .FILL   #'1'
+ASCII .FILL '-x30'
 .end
