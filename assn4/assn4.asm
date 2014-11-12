@@ -13,6 +13,7 @@
 
     ;invalid input jumps to back to the beginning
     ERROR
+    LD R6,DEC_0
     LEA R0,ERROR_MSG
     PUTS
     ;prompt

@@ -17,14 +17,14 @@ LD R5,TEST_VAL
 LEA R0, PROMPT
 PUTS
 
-LD R0, POINTER_RIGHT_SHIFT
-JSRR RO
+LD R0,POINTER_RIGHT_SHIFT
+JSRR R0
 
 
 HALT
 
 ;data
-TEST_VAL .FILL #12345
+TEST_VAL .FILL #16
 PROMPT .STRINGZ "Right shifts the value in TEST_VAL label\n"
 ENTERCHAR .FILL '\n'
 ASCII_TOCHAR .FILL x30
@@ -37,7 +37,7 @@ POINTER_RIGHT_SHIFT .FILL x3200
 ; output:        R5
 ;=================================================
 .orig x3200
-SUB_BIT_COUNTER
+SUB_RIGHT_SHIFT
     
     ;store
     ST R0,R0_BACKUP_3200
@@ -51,10 +51,13 @@ SUB_BIT_COUNTER
     FOREACH_2200
       ADD R2,R2,#0
       BRnz FIN_2200
+      ;check testval vs frotnt bit
       AND R3,R5,R1
       BRz ZERO_CASE
       BR ONE_CASE
 
+      ;on each left shift we account for the truncated 0/1
+      ;by adding to the right end of the number the trunacted 0/1
       ZERO_CASE
         ADD R5,R5,R5
         ADD R2,R2,#-1
@@ -79,7 +82,7 @@ SUB_BIT_COUNTER
     RET
 
 ;DATA
-DEC_15 .FILL #16
+DEC_15 .FILL #15
 FRONT_BIT .FILL x8000
 R0_BACKUP_3200 .BLKW #1
 R1_BACKUP_3200 .BLKW #1
