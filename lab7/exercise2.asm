@@ -17,14 +17,32 @@
   LD R1, PTR_GET_STR
   JSRR R1
   PUTS
+
+  LD R1, PTR_IS_PALINDROME
+  JSRR R1
   
+  ADD R4,R4,#0
+  BRz NOT_PALIN
+  BR  IS_PALIN
+
+  IS_PALIN
+    LEA R0,PALINDROME_NOTICE
+    PUTS
+  BR END_MAIN
+  NOT_PALIN
+    LEA R0,NOT_PALINDROME_NOTICE
+    PUTS
+  BR END_MAIN 
+
+END_MAIN
 HALT
 
 PTR_GET_STR .FILL x3200
+PTR_IS_PALINDROME .FILL x3400
+PALINDROME_NOTICE .STRINGZ " It's a palindrome!\n"
+NOT_PALINDROME_NOTICE .STRINGZ " It's not a palindrome...\n"
 
-.orig x4200
-PTR_REMOTE_STR .FILL x4200
-
+PTR_REMOTE_STR .FILL x4000
 
 ;----------------------------------------------------------------------------------------------------------------
 ; Subroutine: SUB_GET_STRING
@@ -59,6 +77,7 @@ GETSTR_LOOP_3200
   ADD R1,R1,R0
   BRz ENTER_PRESSED_3200
   STR R0,R6,#0
+  ADD R6,R6,#1
   ADD R5,R5,#1
   BR GETSTR_LOOP_3200
 ENTER_PRESSED_3200
@@ -68,19 +87,23 @@ STR R0,R6,#0
 
     
 
+ 
 LD R0,R0_BACKUP_3200
 LD R1,R1_BACKUP_3200
 LD R2,R2_BACKUP_3200
 LD R7,R7_BACKUP_3200
- 
+
 RET 
 
 
 R0_BACKUP_3200 .BLKW #1
 R1_BACKUP_3200 .BLKW #1
 R2_BACKUP_3200 .BLKW #1
+R7_BACKUP_3200 .BLKW #1
+
 ENTERKEY_3200 .FILL '\n'
 PTR_REMOTE_STR_3200 .FILL #0
+
 
 ;------------------------------------------------------------------------------------------------------------------
 ; Subroutine: SUB_IS_A_PALINDROME
@@ -100,28 +123,23 @@ ST R3,R3_BACKUP_3400
 ST R5,R5_BACKUP_3400
 ST R7,R7_BACKUP_3400
 
-;backup the count of chars
-ADD R5,R5,#0
-;R5<- Middle Pos
-LD R4,PTR_RIGHT_SHIFT
-JSRR R4
-;123456789
-;.... ....
-
-;set beginning end counter to 0
-AND R4,R4,#0
+;beginning
+ADD R4,R0,#0
+;end
+ADD R5,R0,R5
+ADD R5,R5,#-1
 
 ;check if n and END-n equal
 ;incr n
 ;stop at midpoint
 MIRROR_LOOP_3400
-  LDR R1,R0,R4
-  LDR R2,R0,R5
-  NOT R3,R2
+  LDR R1,R4,#0
+  LDR R2,R5,#0
+  ;check if each end is the samee via 2s comp.
+  NOT R3,R1
   ADD R3,R3,#1
-  ADD R3,R3,R1
-  BRz MIRROR_LOOP_3400
-  BR NO_MATCH_3400
+  ADD R3,R3,R2
+  BRnp NO_MATCH_3400
   ;incr beg decr end
   ADD R5,R5,#-1
   ADD R4,R4,#1
@@ -130,12 +148,18 @@ MIRROR_LOOP_3400
   ;if zero or neg we reached the middle and can end
   NOT R3,R4
   ADD R3,R3,#1
-  ADD R3,R3,R4
+  ADD R3,R3,R5
   ADD R3,R3,#-1
-  BRnz DONE_3400
+  BRnz PALINDROME_3400
+  BR MIRROR_LOOP_3400
+PALINDROME_3400
+    AND R4,R4,#0
+    ADD R4,R4,#1 
+     BR DONE_3400
 NO_MATCH_3400
+    AND R4,R4,#0
+    BR DONE_3400
 DONE_3400
- 
   
 
 LD R0,R0_BACKUP_3400
@@ -147,11 +171,12 @@ LD R7,R7_BACKUP_3400
 
 RET
 
-PTR_RIGHT_SHIFT .FILL x3600
-
 R0_BACKUP_3400 .BLKW #1
 R1_BACKUP_3400 .BLKW #1
 R2_BACKUP_3400 .BLKW #1
 R3_BACKUP_3400 .BLKW #1
 R5_BACKUP_3400 .BLKW #1
 R7_BACKUP_3400 .BLKW #1
+
+
+.end
