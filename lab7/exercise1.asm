@@ -1,4 +1,3 @@
-
 ;=================================================
 ; Name: <Collier, Craig>
 ; Username: ccoll010
@@ -23,8 +22,7 @@ HALT
 
 PTR_GET_STR .FILL x3200
 
-.orig x4200
-PTR_REMOTE_STR .FILL x4200
+PTR_REMOTE_STR .FILL x4000
 
 
 ;----------------------------------------------------------------------------------------------------------------
@@ -41,6 +39,7 @@ SUB_GET_STRING
 ST R0,R0_BACKUP_3200
 ST R1,R1_BACKUP_3200
 ST R2,R2_BACKUP_3200
+ST R7,R7_BACKUP_3200
 
 
 ;R0 has the location
@@ -59,6 +58,7 @@ GETSTR_LOOP_3200
   ADD R1,R1,R0
   BRz ENTER_PRESSED_3200
   STR R0,R6,#0
+  ADD R6,R6,#1
   ADD R5,R5,#1
   BR GETSTR_LOOP_3200
 ENTER_PRESSED_3200
@@ -68,16 +68,20 @@ STR R0,R6,#0
 
     
 
+ 
 LD R0,R0_BACKUP_3200
 LD R1,R1_BACKUP_3200
 LD R2,R2_BACKUP_3200
- 
+LD R7,R7_BACKUP_3200
+
 RET 
 
 
 R0_BACKUP_3200 .BLKW #1
 R1_BACKUP_3200 .BLKW #1
 R2_BACKUP_3200 .BLKW #1
+R7_BACKUP_3200 .BLKW #1
+
 ENTERKEY_3200 .FILL '\n'
 PTR_REMOTE_STR_3200 .FILL #0
 
