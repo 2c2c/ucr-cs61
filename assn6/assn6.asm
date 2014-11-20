@@ -16,10 +16,63 @@
 LD R0,PTR_MENU
 JSRR R0
 
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION1
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION2
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION3
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION4
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION5
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION6
+ADD R1,R1,#-1
+BRz CHOOSE_OPTION7
+
+CHOOSE_OPTION1
+    LD R0,OPTION1
+    JSRR R0
+    BR END_MAIN
+CHOOSE_OPTION2
+    LD R0,OPTION2
+    JSRR R0
+    BR END_MAIN
+CHOOSE_OPTION3
+    LD R0,OPTION3
+    JSRR R0
+    BR END_MAIN
+CHOOSE_OPTION4
+    LD R0,OPTION4
+    JSRR R0
+    BR END_MAIN
+CHOOSE_OPTION5
+    LD R0,OPTION5
+    JSRR R0
+    BR END_MAIN
+CHOOSE_OPTION6
+    LD R0,OPTION6
+    JSRR R0
+    BR END_MAIN
+CHOOSE_OPTION7
+    LD R0,OPTION7
+    JSRR R0
+    BR END_MAIN
+
+
+END_MAIN
 HALT
 
 
 PTR_MENU .FILL x3200
+OPTION1 .FILL x3400
+OPTION2 .FILL x3600
+OPTION3 .FILL x3800
+OPTION4 .FILL x4000
+OPTION5 .FILL x4200
+OPTION6 .FILL x4400
+OPTION7 .FILL x4600
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: MENU
@@ -35,44 +88,27 @@ SUB_MENU
 ST R0,R0_BACKUP_3200
 ST R7,R7_BACKUP_3200
 
-LD R0, MENUSTR_1  
-PUTS
-LD R0, MENUSTR_2 
-PUTS
-LD R0, MENUSTR_3 
-PUTS
-LD R0, MENUSTR_4 
-PUTS
-LD R0, MENUSTR_5 
-PUTS
-LD R0, MENUSTR_6 
-PUTS
-LD R0, MENUSTR_7 
-PUTS
-LD R0, MENUSTR_8 
-PUTS
-LD R0, MENUSTR_9 
-PUTS
-LD R0, MENUSTR_0 
-PUTS
+LD R1, PTR_MENUTEXT_3200
+WHILE_3200
+    LDR R0,R1,#0
+    OUT
+    ADD R1,R1,#1
+    ADD R0,R0,#0
+    BRnp WHILE_3200
+FIN_3200
 
-MENUSTR_1 .STRINGZ "**********************\n"
-MENUSTR_2 .STRINGZ "* The Busyness Server *\n"
-MENUSTR_3 .STRINGZ "**********************\n"
-MENUSTR_4 .STRINGZ "1. Check to see whether all machines are busy\n"
-MENUSTR_5 .STRINGZ "2. Check to see whether all machines are free\n"
-MENUSTR_6 .STRINGZ "3. Report the number of of machines\n"
-MENUSTR_7 .STRINGZ "4. Report the number of free machines\n"
-MENUSTR_8 .STRINGZ "5. Report the status of machine #\n"
-MENUSTR_9 .STRINGZ "6. Report the number of of first available machine\n"
-MENUSTR_0 .STRINGZ "7. Quit\n"
-
+GETC
+ADD R1,R0,#0
+LD R0,ASCII_TONUM_3200
+ADD R1,R1,R0
 
 LD R0,R0_BACKUP_3200
 LD R7,R7_BACKUP_3200
 
 RET
 
+ASCII_TONUM_3200 .FILL -x30
+PTR_MENUTEXT_3200 .FILL x5200
 R0_BACKUP_3200 .BLKW #1
 R7_BACKUP_3200 .BLKW #1
 ;-----------------------------------------------------------------------------------------------------------------
@@ -103,7 +139,7 @@ RET
 LD R0,R0_BACKUP_3400
 
 
-PTR_BUSYNESS_VEC x5000
+PTR_BUSYNESS_VEC .FILL  x5000
 R0_BACKUP_3400 .BLKW #1
 
 ;-----------------------------------------------------------------------------------------------------------------
@@ -161,8 +197,10 @@ ADD R1,R1,#1
 AND R2,R2,#0
 
 ;loop coounter
+;adds 16 instead of label cause whatever
 AND R3,R3,#0
-ADD R3,R3,#16
+ADD R3,R3,#12
+ADD R3,R3,#4
 
 FOREACH_BIT_4000
   AND R4,R0,R1
@@ -182,9 +220,15 @@ LD R4,R4_BACKUP_4000
 LD R0,R0_BACKUP_4000
 RET
 
-ONE_BIT_4000 .FILL #1
-PTR_BUSYNESS_VEC_4000 x5000
 R0_BACKUP_4000 .BLKW #1
+R1_BACKUP_4000 .BLKW #1
+R2_BACKUP_4000 .BLKW #1
+R3_BACKUP_4000 .BLKW #1
+R4_BACKUP_4000 .BLKW #1
+R0_BACKUP_4000 .BLKW #1
+
+ONE_BIT_4000 .FILL #1
+PTR_BUSYNESS_VEC_4000 .FILL x5000
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: MACHINE_STATUS
 ; Input (R1): Which machine to check
@@ -203,3 +247,20 @@ R0_BACKUP_4000 .BLKW #1
 
 .orig x5000
 BUSYNESS .FILL x4444
+
+
+
+;menu output
+;**********************
+;* The Busyness Server *
+;**********************
+;1. Check to see whether all machines are busy
+;2. Check to see whether all machines are free
+;3. Report the number of busy machines
+;4. Report the number of free machines
+;5. Report the status of machine n
+;6. Report the number of the first available machine
+;7. Quit
+.orig x5200
+MENUSTR_1 .STRINGZ "**********************\n* The Busyness Server*\n**********************\n1. Check to see whether all machines are busy\n2. Check to see whether all machines are free\n3. Report the number of of machines\n4. Report the number of free machines\n5. Report the status of machine #\n6. Report the number of of first available machine\n7. Quit\n"
+;
