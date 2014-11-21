@@ -71,8 +71,8 @@ OPTION2 .FILL x3600
 OPTION3 .FILL x3800
 OPTION4 .FILL x4000
 OPTION5 .FILL x4200
-OPTION6 .FILL x4400
-OPTION7 .FILL x4600
+OPTION6 .FILL x4600
+OPTION7 .FILL x4800
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: MENU
@@ -153,6 +153,7 @@ R0_BACKUP_3400 .BLKW #1
 SUB_ALL_MACHINES_BUSY
 
 ST R0,R0_BACKUP_3600
+ST R7,R7_BACKUP_3600
 
 LD R0,PTR_ALL_BUSY_3600
 JSRR R0
@@ -161,10 +162,12 @@ NOT R2,R2
 AND R2,R2,#1
 
 LD R0,R0_BACKUP_3600
+LD R7,R7_BACKUP_3600
 RET
 
 PTR_ALL_BUSY_3600 .FILL x3400
 R0_BACKUP_3600 .BLKW #1
+R7_BACKUP_3600 .BLKW #1
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: NUM_BUSY_MACHINES
 ; Inputs: None
@@ -173,6 +176,31 @@ R0_BACKUP_3600 .BLKW #1
 ;-----------------------------------------------------------------------------------------------------------------
 .orig x3800
 SUB_NUM_BUSY_MACHINES
+
+ST R0,R0_BACKUP_3800
+ST R7,R7_BACKUP_3800
+
+LD R0,PTR_NUM_FREE_MACHINES
+JSRR R0
+;fill reg with 16
+AND R0,R0,#0
+ADD R0,R0,#12
+ADD R0,R0,#4
+;flip what's currently in R2
+NOT R2,R2
+ADD R2,R2,#1
+;16 - what was in R2 = num busy
+ADD R2,R2,R0
+
+LD R0,R0_BACKUP_3800
+LD R7,R7_BACKUP_3800
+
+RET
+
+PTR_NUM_FREE_MACHINES .FILL x4000
+R0_BACKUP_3800 .BLKW  #1
+R7_BACKUP_3800 .BLKW  #1
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: NUM_FREE_MACHINES
 ; Inputs: None
@@ -184,11 +212,12 @@ SUB_NUM_FREE_MACHINES
 
 ST R0,R0_BACKUP_4000
 ST R1,R1_BACKUP_4000
-ST R2,R2_BACKUP_4000
 ST R3,R3_BACKUP_4000
 ST R4,R4_BACKUP_4000
+ST R7,R7_BACKUP_4000
 
 LD R0,PTR_BUSYNESS_VEC_4000
+LDR R0,R0,#0
 ;bit set to 1 and will iterate through each
 AND R1,R1,#0
 ADD R1,R1,#1
@@ -209,26 +238,28 @@ FOREACH_BIT_4000
   NO_COUNT_4000
   ADD R1,R1,R1
   ADD R3,R3,#-1
+  BRnp FOREACH_BIT_4000
 END_4000
   
 
 
 LD R1,R1_BACKUP_4000
-LD R2,R2_BACKUP_4000
 LD R3,R3_BACKUP_4000
 LD R4,R4_BACKUP_4000
 LD R0,R0_BACKUP_4000
+ST R7,R7_BACKUP_4000
 RET
 
 R0_BACKUP_4000 .BLKW #1
 R1_BACKUP_4000 .BLKW #1
-R2_BACKUP_4000 .BLKW #1
 R3_BACKUP_4000 .BLKW #1
 R4_BACKUP_4000 .BLKW #1
-R0_BACKUP_4000 .BLKW #1
+R7_BACKUP_4000 .BLKW #1
 
 ONE_BIT_4000 .FILL #1
 PTR_BUSYNESS_VEC_4000 .FILL x5000
+
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: MACHINE_STATUS
 ; Input (R1): Which machine to check
@@ -236,6 +267,145 @@ PTR_BUSYNESS_VEC_4000 .FILL x5000
 ;                by (R1) is busy or not.
 ; Return Value (R2): 0 if machine (R1) is busy, 1 if it is free
 ;-----------------------------------------------------------------------------------------------------------------
+
+.orig x4200
+SUB_MACHINE_STATUS
+
+ST R0,R0_BACKUP_4200
+ST R1,R1_BACKUP_4200
+ST R7,R7_BACKUP_4200
+
+;prompt bus input fn
+LD R0,PTR_BINOUT_4200
+JSRR R0
+
+;fill 1 in register
+;right shift n times where n is the bus requested
+AND R0,R0,#1
+ADD R0,R0,#1
+
+ADD R1,R1,#0
+RIGHTSHIFT_4200
+    BRnz ENDSHIFT_4200
+    ;TODO swap code from other assn to make this a leftshift
+    ADD R0,R0,R0
+    ADD R1,R1,#-1
+    BR RIGHTSHIFT_4200
+ENDSHIFT_4200
+
+;mask the shifted bit over busyvec to see if the bit is busy or not
+
+LD R1,PTR_BUSYNESS_VEC_4200
+LDR R1,R1,#0
+AND R1,R0,R1
+
+ADD R2,R1,#0
+
+LD R0,R0_BACKUP_4200
+LD R1,R1_BACKUP_4200
+LD R7,R7_BACKUP_4200
+RET
+
+PTR_BUSYNESS_VEC_4200 .FILL x5000
+PTR_BINOUT_4200 .FILL x4400
+
+R0_BACKUP_4200 .BLKW #1
+R1_BACKUP_4200 .BLKW #1
+R7_BACKUP_4200 .BLKW #1
+
+
+;-------------------------------------------------
+; SUB_BINOUT_4400
+; input: none
+; postconditions: asks for input in binary form, converts to dec, stores result in a register
+; output: R1 <- DEC value of two input digits
+;-------------------------------------------------
+
+.orig x4400
+SUB_BINOUT
+
+;backup
+ST R0,R0_BACKUP_4400
+ST R2,R2_BACKUP_4400
+ST R7,R7_BACKUP_4400
+
+BR START_POINT
+
+;jump to beginning at invalid input
+INVALID_INPUT_4400
+LEA R0,INVALID_4400
+PUTS
+
+
+;begin past the error input dialog
+START_POINT
+;prompt
+LEA R0,PROMPT_4400
+PUTS
+
+;empty R1 and get input
+AND R1,R1,#0
+GETC
+OUT
+;convert to dec
+LD R2,ASCII_4400
+ADD R0,R0,R2
+
+;copy first dig to separate place 
+ADD R3,R0,#0
+
+GETC
+OUT
+
+LD R1,ASCII_ENTER_4400
+NOT R1,R1
+ADD R1,R1,#1
+ADD R1,R1,R0
+BRz ENTER_CASE_4400
+
+;straightline mult by 10
+ADD R1,R1,#0
+ADD R1,R3,#0
+ADD R3,R3,R3
+ADD R1,R1,R1
+ADD R1,R1,R1
+ADD R1,R1,R1
+ADD R1,R3,R1
+
+;convert to dec
+ADD R1,R1,R0
+BR FIN_4400
+;entercase just skips multiplying to 10s place and places the first number entered back
+;into position to be read
+ENTER_CASE_4400
+    ADD R0,R3,#0
+FIN_4400
+
+
+
+;validation
+BRn INVALID_INPUT_4400
+ADD R0,R1,#-10
+ADD R0,R0,#-5
+BRp INVALID_INPUT_4400
+
+;restore
+LD R0,R0_BACKUP_4400
+LD R2,R2_BACKUP_4400
+LD R7,R7_BACKUP_4400
+;return
+RET
+
+R7_BACKUP_4400 .FILL #1
+ASCII_4400 .FILL -x30
+PROMPT_4400 .STRINGZ "\nWhich machine status to you want to see (0-15)\n"
+INVALID_4400 .STRINGZ "\nInvalid input, try again (0-15)\n"
+ASCII_ENTER_4400 .FILL '\n'
+
+R0_BACKUP_4400 .BLKW #1
+R2_BACKUP_4400 .BLKW #1
+R7_BACKUP_4400 .BLKW #1
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: FIRST_FREE
 ; Inputs: None
@@ -246,7 +416,7 @@ PTR_BUSYNESS_VEC_4000 .FILL x5000
 
 
 .orig x5000
-BUSYNESS .FILL x4444
+BUSYNESS .FILL x8000
 
 
 
@@ -262,5 +432,10 @@ BUSYNESS .FILL x4444
 ;6. Report the number of the first available machine
 ;7. Quit
 .orig x5200
-MENUSTR_1 .STRINGZ "**********************\n* The Busyness Server*\n**********************\n1. Check to see whether all machines are busy\n2. Check to see whether all machines are free\n3. Report the number of of machines\n4. Report the number of free machines\n5. Report the status of machine #\n6. Report the number of of first available machine\n7. Quit\n"
+MENUSTR_1 .STRINGZ "**********************\n* The Busyness Server*\n**********************\n1. Check to see whether all machines are busy\n2. Check to see whether all machines are free\n3. Report the number of busy machines\n4. Report the number of free machines\n5. Report the status of machine #\n6. Report the number of of first available machine\n7. Quit\n"
 ;
+
+
+
+
+.end
