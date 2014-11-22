@@ -32,6 +32,7 @@ ADD R1,R1,#-1
 BRz CHOOSE_OPTION6
 ADD R1,R1,#-1
 BRz CHOOSE_OPTION7
+BR RESTART_MAIN
 
 CHOOSE_OPTION1
     LD R0,OPTION1
@@ -63,7 +64,6 @@ CHOOSE_OPTION7
     LEA R0,MSG_GOODBYE
     PUTS
     BR END_MAIN
-BR RESTART_MAIN
 
 END_MAIN
 HALT
@@ -562,8 +562,18 @@ RIGHTSHIFT_4600
      BR RIGHTSHIFT_4600
 FINSHIFT_4600
 
+;need a special branch for when none are free
+;or it outputs machine 16 is free (as it has iterated 0-15 and stopped)
+ADD R1,R1,#0
+BRnp NORMAL_PRINT_4600 
+LEA R0,MSG_NONEFREE_4600
+PUTS
 
-;print
+;jump past the normal print if we did the nonefree print
+BR ENDMSG_4600
+
+NORMAL_PRINT_4600
+;print normal
 LEA R0,MSG_FIRSTPIECE_4600
 PUTS
 
@@ -574,6 +584,7 @@ JSRR R0
 LEA R0,MSG_SECONDPIECE_4600
 PUTS
 
+ENDMSG_4600
 LD R0,R0_BACKUP_4600
 LD R1,R1_BACKUP_4600
 LD R3,R3_BACKUP_4600
@@ -589,6 +600,7 @@ PTR_BUSYNESS_VECTOR_4600 .FILL x5000
 PTR_RIGHTSHIFT_4600 .FILL x4800
 MSG_FIRSTPIECE_4600 .STRINGZ "6-> The first free machine is "
 MSG_SECONDPIECE_4600 .STRINGZ "\n"
+MSG_NONEFREE_4600 .STRINGZ "6-> There are no machines free\n"
 PTR_PRINTNUM_4600 .FILL x5400
 
 R0_BACKUP_4600 .BLKW #1
@@ -864,6 +876,6 @@ MENUSTR_1 .STRINGZ "\n\n**********************\n* The Busyness Server*\n********
 ;
 
 .orig x5000
-BUSYNESS .FILL x00FF
+BUSYNESS .FILL xcf03
 
 .end
