@@ -2,7 +2,7 @@
 ; Name: <Collier, Craig>
 ; Username: ccoll010
 ; 
-; Lab: <lab 1>
+; assn: assn6
 ; Lab section: 221
 ; TA: Bryan Marsh
 ; 
@@ -12,6 +12,8 @@
 ; MAIN
 ;-----------------------------------------------------------------------------------------------------------------
 .orig x3000
+
+RESTART_MAIN
 
 LD R0,PTR_MENU
 JSRR R0
@@ -34,32 +36,34 @@ BRz CHOOSE_OPTION7
 CHOOSE_OPTION1
     LD R0,OPTION1
     JSRR R0
-    BR END_MAIN
+    BR RESTART_MAIN
 CHOOSE_OPTION2
     LD R0,OPTION2
     JSRR R0
-    BR END_MAIN
+    BR RESTART_MAIN
 CHOOSE_OPTION3
     LD R0,OPTION3
     JSRR R0
-    BR END_MAIN
+    BR RESTART_MAIN
 CHOOSE_OPTION4
     LD R0,OPTION4
     JSRR R0
-    BR END_MAIN
+    BR RESTART_MAIN
 CHOOSE_OPTION5
     LD R0,OPTION5
     JSRR R0
-    BR END_MAIN
+    BR RESTART_MAIN
 CHOOSE_OPTION6
     LD R0,OPTION6
     JSRR R0
-    BR END_MAIN
+    BR RESTART_MAIN
 CHOOSE_OPTION7
     LD R0,OPTION7
     JSRR R0
+    LEA R0,MSG_GOODBYE
+    PUTS
     BR END_MAIN
-
+BR RESTART_MAIN
 
 END_MAIN
 HALT
@@ -73,6 +77,7 @@ OPTION4 .FILL x4000
 OPTION5 .FILL x4200
 OPTION6 .FILL x4600
 OPTION7 .FILL x4800
+MSG_GOODBYE .STRINGZ "7-> Goodbye\n"
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: MENU
@@ -100,6 +105,7 @@ FIN_3200
 GETC
 ADD R1,R0,#0
 LD R0,ASCII_TONUM_3200
+;returns number picked in R1
 ADD R1,R1,R0
 
 LD R0,R0_BACKUP_3200
@@ -122,24 +128,39 @@ R7_BACKUP_3200 .BLKW #1
 SUB_ALL_MACHINES_BUSY
 
 ST R0,R0_BACKUP_3400
+ST R7,R7_BACKUP_3400
 
 LD R0,PTR_BUSYNESS_VEC_3400
 LDR R0,R0,#0
 BRz BUSY_3400
+LEA R0,MSG_ALLNOT_BUSY_3400
+PUTS
+AND R2,R2,#0
 BR NOTBUSY_3400
 
-AND R2,R2,#0
 BUSY_3400
+  AND R2,R2,#0
   ADD R2,R2,#1 
+  LEA R0,MSG_ALLBUSY_3400
+  PUTS
 NOTBUSY_3400
+
+
+
+
+
+
+
+LD R0,R0_BACKUP_3400
+LD R7,R7_BACKUP_3400
 
 RET
 
-LD R0,R0_BACKUP_3400
-
-
 PTR_BUSYNESS_VEC_3400 .FILL  x5000
+MSG_ALLBUSY_3400 .STRINGZ "1-> All of the machines are busy\n"
+MSG_ALLNOT_BUSY_3400 .STRINGZ "1-> All of the machines are not busy\n"
 R0_BACKUP_3400 .BLKW #1
+R7_BACKUP_3400 .BLKW #1
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: ALL_MACHINES_FREE
@@ -152,25 +173,35 @@ R0_BACKUP_3400 .BLKW #1
 SUB_ALL_MACHINES_FREE
 
 ST R0,R0_BACKUP_3600
+ST R7,R7_BACKUP_3600
 
 LD R0,PTR_BUSYNESS_VEC_3600
 LDR R0,R0,#0
 ADD R0,R0,#1
-BRz BUSY_3600
-BR FREE_3600
-
+BRz FREE_3600
+LEA R0,MSG_ALLNOTFREE_3600
+PUTS
 AND R2,R2,#0
-BUSY_3600
-  ADD R2,R2,#1 
+BR NOTFREE_3600
+
 FREE_3600
+  AND R2,R2,#0
+  ADD R2,R2,#1 
+  LEA R0,MSG_ALLFREE_3600
+  PUTS
+NOTFREE_3600
+
+
+LD R0,R0_BACKUP_3600
+LD R7,R7_BACKUP_3600
 
 RET
 
-LD R0,R0_BACKUP_3600
-
-
 PTR_BUSYNESS_VEC_3600 .FILL  x5000
+MSG_ALLFREE_3600 .STRINGZ "2-> All of the machines are free\n"
+MSG_ALLNOTFREE_3600 .STRINGZ "2-> All of the machines are not free\n"
 R0_BACKUP_3600 .BLKW #1
+R7_BACKUP_3600 .BLKW #1
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: NUM_BUSY_MACHINES
@@ -182,8 +213,11 @@ R0_BACKUP_3600 .BLKW #1
 SUB_NUM_BUSY_MACHINES
 
 ST R0,R0_BACKUP_3800
+ST R5,R5_BACKUP_3800
 ST R7,R7_BACKUP_3800
 
+AND R5,R5,#0
+ADD R5,R5,#1
 LD R0,PTR_NUM_FREE_MACHINES
 JSRR R0
 ;fill reg with 16
@@ -196,19 +230,33 @@ ADD R2,R2,#1
 ;16 - what was in R2 = num busy
 ADD R2,R2,R0
 
+ADD R6,R2,#0
+LEA R0,MSG_FIRSTPIECE_3800
+PUTS
+
+LD R0,PTR_PRINTNUM_3800
+JSRR R0
+
+LEA R0,MSG_SECONDPIECE_3800
+PUTS
 LD R0,R0_BACKUP_3800
+LD R5,R5_BACKUP_3800
 LD R7,R7_BACKUP_3800
 
 RET
 
 PTR_NUM_FREE_MACHINES .FILL x4000
+MSG_FIRSTPIECE_3800 .STRINGZ "3-> There are "
+MSG_SECONDPIECE_3800 .STRINGZ " busy machines currently\n"
+PTR_PRINTNUM_3800 .FILL x5400
 R0_BACKUP_3800 .BLKW  #1
+R5_BACKUP_3800 .BLKW  #1
 R7_BACKUP_3800 .BLKW  #1
 
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: NUM_FREE_MACHINES
-; Inputs: None
-; Postcondition: The subroutine has returned the number of free machines
+; Inputs: R5
+; Postcondition: The subroutine has returned the number of free machines. R5 tells not to print
 ; Return Value (R2): The number of machines that are free
 ;-----------------------------------------------------------------------------------------------------------------
 .orig x4000
@@ -218,6 +266,7 @@ ST R0,R0_BACKUP_4000
 ST R1,R1_BACKUP_4000
 ST R3,R3_BACKUP_4000
 ST R4,R4_BACKUP_4000
+ST R5,R5_BACKUP_4000
 ST R7,R7_BACKUP_4000
 
 LD R0,PTR_BUSYNESS_VEC_4000
@@ -245,22 +294,42 @@ FOREACH_BIT_4000
   BRnp FOREACH_BIT_4000
 END_4000
   
+  ADD R6,R2,#0
 
+;flag R5 warns that busy is using this fn for information 
+;and doesn't want the print section
+ADD R5,R5,#-1
+BRz SKIP_PRINT_4000
 
+LEA R0,MSG_FIRSTPIECE_4000
+PUTS
+
+LD R0,PTR_PRINTNUM_4000
+JSRR R0
+
+LEA R0,MSG_SECONDPIECE_4000
+PUTS
+SKIP_PRINT_4000
+
+LD R0,R0_BACKUP_4000
 LD R1,R1_BACKUP_4000
 LD R3,R3_BACKUP_4000
 LD R4,R4_BACKUP_4000
-LD R0,R0_BACKUP_4000
-ST R7,R7_BACKUP_4000
+LD R5,R5_BACKUP_4000
+LD R7,R7_BACKUP_4000
 RET
 
 R0_BACKUP_4000 .BLKW #1
 R1_BACKUP_4000 .BLKW #1
 R3_BACKUP_4000 .BLKW #1
 R4_BACKUP_4000 .BLKW #1
+R5_BACKUP_4000 .BLKW #1
 R7_BACKUP_4000 .BLKW #1
 
+PTR_PRINTNUM_4000 .FILL x5400
 ONE_BIT_4000 .FILL #1
+MSG_FIRSTPIECE_4000 .STRINGZ "4-> There are "
+MSG_SECONDPIECE_4000 .STRINGZ " free machines currently\n"
 PTR_BUSYNESS_VEC_4000 .FILL x5000
 
 
@@ -277,10 +346,18 @@ SUB_MACHINE_STATUS
 
 ST R0,R0_BACKUP_4200
 ST R1,R1_BACKUP_4200
+ST R5,R5_BACKUP_4200
 ST R7,R7_BACKUP_4200
 
 ;prompt bus input fn
 LD R0,PTR_BINOUT_4200
+JSRR R0
+
+ADD R6,R1,#0
+;print beginnings
+LEA R0,MSG_FIRSTPIECE_4200
+PUTS
+LD R0,PTR_PRINTNUM_4200
 JSRR R0
 
 ;fill front bit in register
@@ -311,9 +388,13 @@ BR BUSYCASE_4200
 FREECASE_4200
     AND R2,R2,#0
     ADD R2,R2,#1
+    LEA R0,MSG_FREE
+    PUTS
     BR END_4200
 BUSYCASE_4200
     AND R2,R2,#0
+    LEA R0,MSG_BUSY
+    PUTS
     BR END_4200
 
 
@@ -321,6 +402,7 @@ END_4200
 
 LD R0,R0_BACKUP_4200
 LD R1,R1_BACKUP_4200
+LD R5,R5_BACKUP_4200
 LD R7,R7_BACKUP_4200
 RET
 
@@ -330,9 +412,13 @@ SINGLE_BIT_4200 .FILL x8000
 PTR_BUSYNESS_VEC_4200 .FILL x5000
 PTR_RIGHTSHIFT_4200 .FILL x4800
 PTR_BINOUT_4200 .FILL x4400
-
+MSG_FIRSTPIECE_4200 .STRINGZ "\n5-> The state of machine "
+MSG_FREE .STRINGZ " is FREE\n"
+MSG_BUSY .STRINGZ " is BUSY\n"
+PTR_PRINTNUM_4200 .FILL x5400
 R0_BACKUP_4200 .BLKW #1
 R1_BACKUP_4200 .BLKW #1
+R5_BACKUP_4200 .BLKW #1
 R7_BACKUP_4200 .BLKW #1
 
 
@@ -348,6 +434,7 @@ SUB_BINOUT
 
 ;backup
 ST R0,R0_BACKUP_4400
+ST R3,R3_BACKUP_4400
 ST R2,R2_BACKUP_4400
 ST R7,R7_BACKUP_4400
 
@@ -419,6 +506,7 @@ BRp INVALID_INPUT_4400
 ;restore
 LD R0,R0_BACKUP_4400
 LD R2,R2_BACKUP_4400
+LD R3,R3_BACKUP_4400
 LD R7,R7_BACKUP_4400
 ;return
 RET
@@ -430,6 +518,7 @@ INVALID_4400 .STRINGZ "\nInvalid input, try again (0-15)\n"
 ASCII_ENTER_4400 .FILL '\n'
 
 R0_BACKUP_4400 .BLKW #1
+R3_BACKUP_4400 .BLKW #1
 R2_BACKUP_4400 .BLKW #1
 R7_BACKUP_4400 .BLKW #1
 
@@ -440,6 +529,76 @@ R7_BACKUP_4400 .BLKW #1
 ; The subroutine has returned a value indicating the lowest numbered free machine
 ; Return Value (R2): the number of the free machine
 ;-----------------------------------------------------------------------------------------------------------------
+.orig x4600
+SUB_FIRST_FREE
+
+ST R0,R0_BACKUP_4600
+ST R1,R1_BACKUP_4600
+ST R3,R3_BACKUP_4600
+ST R4,R4_BACKUP_4600
+ST R5,R5_BACKUP_4600
+ST R7,R7_BACKUP_4600
+
+;position counter
+AND R2,R2,#0
+;16 iterations limitor
+AND R1,R1,#0
+ADD R1,R1,#12
+ADD R1,R1,#4
+
+LD R5,FIRST_BIT_4600
+LD R4,PTR_BUSYNESS_VECTOR_4600
+LDR R4,R4,#0
+
+;iterate right shifts till free machine is found
+RIGHTSHIFT_4600
+     AND R3,R4,R5
+     BRnp FINSHIFT_4600   
+     LD R0,PTR_RIGHTSHIFT_4600
+     JSRR R0
+     ADD R2,R2,#1
+     ADD R1,R1,#-1
+     BRz FINSHIFT_4600
+     BR RIGHTSHIFT_4600
+FINSHIFT_4600
+
+
+;print
+LEA R0,MSG_FIRSTPIECE_4600
+PUTS
+
+ADD R6,R2,#0
+LD R0,PTR_PRINTNUM_4600
+JSRR R0
+
+LEA R0,MSG_SECONDPIECE_4600
+PUTS
+
+LD R0,R0_BACKUP_4600
+LD R1,R1_BACKUP_4600
+LD R3,R3_BACKUP_4600
+LD R4,R4_BACKUP_4600
+LD R5,R5_BACKUP_4600
+LD R7,R7_BACKUP_4600
+
+RET
+
+
+FIRST_BIT_4600 .FILL x8000
+PTR_BUSYNESS_VECTOR_4600 .FILL x5000
+PTR_RIGHTSHIFT_4600 .FILL x4800
+MSG_FIRSTPIECE_4600 .STRINGZ "6-> The first free machine is "
+MSG_SECONDPIECE_4600 .STRINGZ "\n"
+PTR_PRINTNUM_4600 .FILL x5400
+
+R0_BACKUP_4600 .BLKW #1
+R1_BACKUP_4600 .BLKW #1
+R3_BACKUP_4600 .BLKW #1
+R4_BACKUP_4600 .BLKW #1
+R5_BACKUP_4600 .BLKW #1
+R7_BACKUP_4600 .BLKW #1
+
+
 
 ;=================================================
 ; SUB_RIGHT_SHIFT
@@ -458,29 +617,29 @@ SUB_RIGHT_SHIFT
     ST R4,R4_BACKUP_4800
     ST R7,R7_BACKUP_4800
       
-      LD R1,FRONT_BIT
-      LD R2, DEC_15
-    FOREACH_2200
+      LD R1,FRONT_BIT_4800
+      LD R2, DEC_15_4800
+    FOREACH_4800
       ADD R2,R2,#0
-      BRnz FIN_2200
+      BRnz FIN_4800
       ;check testval vs frotnt bit
       AND R3,R5,R1
-      BRz ZERO_CASE
-      BR ONE_CASE
+      BRz ZERO_CASE_4800
+      BR ONE_CASE_4800
 
       ;on each left shift we account for the truncated 0/1
       ;by adding to the right end of the number the trunacted 0/1
-      ZERO_CASE
+      ZERO_CASE_4800
         ADD R5,R5,R5
         ADD R2,R2,#-1
-        BR FOREACH_2200
+        BR FOREACH_4800
 
-      ONE_CASE
+      ONE_CASE_4800
         ADD R5,R5,R5
         ADD R5,R5,#1
         ADD R2,R2,#-1
-        BR FOREACH_2200
-      FIN_2200
+        BR FOREACH_4800
+      FIN_4800
 
 
 
@@ -495,8 +654,8 @@ SUB_RIGHT_SHIFT
     RET
 
 ;DATA
-DEC_15 .FILL #15
-FRONT_BIT .FILL x8000
+DEC_15_4800 .FILL #15
+FRONT_BIT_4800 .FILL x8000
 R0_BACKUP_4800 .BLKW #1
 R1_BACKUP_4800 .BLKW #1
 R2_BACKUP_4800 .BLKW #1
@@ -506,8 +665,186 @@ R5_BACKUP_4800 .BLKW #1
 R6_BACKUP_4800 .BLKW #1
 R7_BACKUP_4800 .BLKW #1
 
-.orig x5000
-BUSYNESS .FILL x0006
+
+
+
+
+;=================================================
+; SUB_PRINT_NUM
+; input:         R6
+; postcondition: Given literal number input, outputs character form
+; output:        
+;=================================================
+.orig x5400
+SUB_PRINT_NUM
+
+ST R0,R0_BACKUP_5400
+ST R1,R1_BACKUP_5400
+ST R6,R6_BACKUP_5400
+ST R2,R2_BACKUP_5400
+ST R3,R3_BACKUP_5400
+ST R4,R4_BACKUP_5400
+ST R7,R7_BACKUP_5400
+
+;flip input if it is negative, apply flag to output minus sign if necessary
+ADD R6,R6,#0
+BRz ZERO_CASE_5400
+BRn NEG_CASE_5400
+BR NORM_CASE_5400
+
+ZERO_CASE_5400
+    LD R4, ASCII_TOCHAR_5400
+    ADD R0,R6,R4
+    OUT
+    BR SKIP_5400_5
+NEG_CASE_5400
+    LD R0,MINUSCHAR_5400
+    OUT
+    NOT R6,R6
+    ADD R6,R6,#1
+NORM_CASE_5400
+
+;store in R0, convert to ascii and output front digit
+LD R0,DEC_10000_5400
+AND R3,R3,#0
+
+
+;this could very clearly have been rolled into a loop
+;the use for it started much simpler and simply pasting it 5 times for
+;output was actually faster than constructing a loop
+;complexity has built up and adding to it made more sense than fixing it
+
+;flag R1 signifies there's been a nonzero number output
+;this manages leading zeroes
+AND R1,R1,#0
+
+DECR_10000_5400
+    ADD R2,R6,#0
+    ADD R2,R2,R0
+    BRn DONE_10000_5400
+    ADD R3,R3,#1
+    ADD R6,R2,#0
+    BR DECR_10000_5400
+DONE_10000_5400
+    LD R4, ASCII_TOCHAR_5400
+    ADD R0,R3,R4
+    LD R5,ASCII_TONUM_5400
+    ADD R5,R5,R0
+    ADD R5,R5,R1
+    BRz SKIP_5400_1
+    ADD R1,R1,#1
+    OUT
+SKIP_5400_1
+
+LD R0,DEC_1000_5400
+AND R3,R3,#0
+DECR_1000_5400
+    ADD R2,R6,#0
+    ADD R2,R2,R0
+    BRn DONE_1000_5400
+    ADD R3,R3,#1
+    ADD R6,R2,#0
+    BR DECR_1000_5400
+DONE_1000_5400
+    LD R4, ASCII_TOCHAR_5400
+    ADD R0,R3,R4
+    LD R5,ASCII_TONUM_5400
+    ADD R5,R5,R0
+    ADD R5,R5,R1
+    BRz SKIP_5400_2 
+    ADD R1,R1,#1
+    OUT
+
+SKIP_5400_2
+LD R0,DEC_100_5400
+AND R3,R3,#0
+DECR_100_5400
+    ADD R2,R6,#0
+    ADD R2,R2,R0
+    BRn DONE_100_5400
+    ADD R3,R3,#1
+    ADD R6,R2,#0
+    BR DECR_100_5400
+DONE_100_5400
+    LD R4, ASCII_TOCHAR_5400
+    ADD R0,R3,R4
+    LD R5,ASCII_TONUM_5400
+    ADD R5,R5,R0
+    ADD R5,R5,R1
+    BRz SKIP_5400_3
+    ADD R1,R1,#1
+    OUT
+
+
+SKIP_5400_3
+LD R0,DEC_10_5400
+AND R3,R3,#0
+DECR_10_5400
+    ADD R2,R6,#0
+    ADD R2,R2,R0
+    BRn DONE_10_5400
+    ADD R3,R3,#1
+    ADD R6,R2,#0
+    BR DECR_10_5400
+DONE_10_5400
+    LD R4, ASCII_TOCHAR_5400
+    ADD R0,R3,R4
+    LD R5,ASCII_TONUM_5400
+    ADD R5,R5,R0
+    ADD R5,R5,R1
+    BRz SKIP_5400_4
+    ADD R1,R1,#1
+    OUT
+
+SKIP_5400_4
+LD R0,DEC_1_5400
+AND R3,R3,#0
+DECR_1_5400
+    ADD R2,R6,#0
+    ADD R2,R2,R0
+    BRn DONE_1_5400
+    ADD R3,R3,#1
+    ADD R6,R2,#0
+    BR DECR_1_5400
+DONE_1_5400
+    LD R4, ASCII_TOCHAR_5400
+    ADD R0,R3,R4
+    LD R5,ASCII_TONUM_5400
+    ADD R5,R5,R0
+    ADD R5,R5,R1
+    BRz SKIP_5400_5
+    ADD R1,R1,#1
+    OUT
+SKIP_5400_5
+
+;restore
+LD R0,R0_BACKUP_5400
+LD R1,R1_BACKUP_5400
+LD R6,R6_BACKUP_5400
+LD R2,R2_BACKUP_5400
+LD R3,R3_BACKUP_5400
+LD R4,R4_BACKUP_5400
+LD R7,R7_BACKUP_5400
+
+RET
+
+
+R0_BACKUP_5400 .BLKW #1
+R1_BACKUP_5400 .BLKW #1
+R6_BACKUP_5400 .BLKW #1
+R2_BACKUP_5400 .BLKW #1
+R3_BACKUP_5400 .BLKW #1
+R4_BACKUP_5400 .BLKW #1
+R7_BACKUP_5400 .BLKW #1
+
+ASCII_TOCHAR_5400 .FILL x30
+ASCII_TONUM_5400 .FILL -x30
+MINUSCHAR_5400 .FILL '-'
+DEC_10000_5400 .FILL #-10000
+DEC_1000_5400 .FILL #-1000
+DEC_100_5400 .FILL #-100
+DEC_10_5400 .FILL #-10
+DEC_1_5400 .FILL #-1
 
 
 
@@ -523,10 +860,10 @@ BUSYNESS .FILL x0006
 ;6. Report the number of the first available machine
 ;7. Quit
 .orig x5200
-MENUSTR_1 .STRINGZ "**********************\n* The Busyness Server*\n**********************\n1. Check to see whether all machines are busy\n2. Check to see whether all machines are free\n3. Report the number of busy machines\n4. Report the number of free machines\n5. Report the status of machine #\n6. Report the number of of first available machine\n7. Quit\n"
+MENUSTR_1 .STRINGZ "\n\n**********************\n* The Busyness Server*\n**********************\n1. Check to see whether all machines are busy\n2. Check to see whether all machines are free\n3. Report the number of busy machines\n4. Report the number of free machines\n5. Report the status of machine #\n6. Report the number of of first available machine\n7. Quit\n\n"
 ;
 
-
-
+.orig x5000
+BUSYNESS .FILL x00FF
 
 .end
