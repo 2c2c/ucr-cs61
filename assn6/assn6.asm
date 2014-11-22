@@ -123,23 +123,22 @@ SUB_ALL_MACHINES_BUSY
 
 ST R0,R0_BACKUP_3400
 
-LD R0,PTR_BUSYNESS_VEC
+LD R0,PTR_BUSYNESS_VEC_3400
 LDR R0,R0,#0
-ADD R0,R0,#1
 BRz BUSY_3400
-BR FREE_3400
+BR NOTBUSY_3400
 
 AND R2,R2,#0
 BUSY_3400
   ADD R2,R2,#1 
-FREE_3400
+NOTBUSY_3400
 
 RET
 
 LD R0,R0_BACKUP_3400
 
 
-PTR_BUSYNESS_VEC .FILL  x5000
+PTR_BUSYNESS_VEC_3400 .FILL  x5000
 R0_BACKUP_3400 .BLKW #1
 
 ;-----------------------------------------------------------------------------------------------------------------
@@ -150,24 +149,29 @@ R0_BACKUP_3400 .BLKW #1
 ;-----------------------------------------------------------------------------------------------------------------
 ;1 means free 0 means busy
 .orig x3600
-SUB_ALL_MACHINES_BUSY
+SUB_ALL_MACHINES_FREE
 
 ST R0,R0_BACKUP_3600
-ST R7,R7_BACKUP_3600
 
-LD R0,PTR_ALL_BUSY_3600
-JSRR R0
+LD R0,PTR_BUSYNESS_VEC_3600
+LDR R0,R0,#0
+ADD R0,R0,#1
+BRz BUSY_3600
+BR FREE_3600
 
-NOT R2,R2
-AND R2,R2,#1
+AND R2,R2,#0
+BUSY_3600
+  ADD R2,R2,#1 
+FREE_3600
 
-LD R0,R0_BACKUP_3600
-LD R7,R7_BACKUP_3600
 RET
 
-PTR_ALL_BUSY_3600 .FILL x3400
+LD R0,R0_BACKUP_3600
+
+
+PTR_BUSYNESS_VEC_3600 .FILL  x5000
 R0_BACKUP_3600 .BLKW #1
-R7_BACKUP_3600 .BLKW #1
+
 ;-----------------------------------------------------------------------------------------------------------------
 ; Subroutine: NUM_BUSY_MACHINES
 ; Inputs: None
@@ -279,16 +283,15 @@ ST R7,R7_BACKUP_4200
 LD R0,PTR_BINOUT_4200
 JSRR R0
 
-;fill 1 in register
+;fill front bit in register
 ;right shift n times where n is the bus requested
-AND R0,R0,#1
-ADD R0,R0,#1
-
-ADD R1,R1,#0
+LD R5,SINGLE_BIT_4200
 RIGHTSHIFT_4200
+    ADD R1,R1,#0
     BRnz ENDSHIFT_4200
-    ;TODO swap code from other assn to make this a leftshift
-    ADD R0,R0,R0
+    ;exec rightshift
+    LD R0,PTR_RIGHTSHIFT_4200
+    JSRR R0
     ADD R1,R1,#-1
     BR RIGHTSHIFT_4200
 ENDSHIFT_4200
@@ -297,16 +300,35 @@ ENDSHIFT_4200
 
 LD R1,PTR_BUSYNESS_VEC_4200
 LDR R1,R1,#0
-AND R1,R0,R1
+AND R1,R5,R1
 
-ADD R2,R1,#0
+;if nonzero the machine is free
+;return 1
+;else 0
+BRnp FREECASE_4200
+BR BUSYCASE_4200
+
+FREECASE_4200
+    AND R2,R2,#0
+    ADD R2,R2,#1
+    BR END_4200
+BUSYCASE_4200
+    AND R2,R2,#0
+    BR END_4200
+
+
+END_4200
 
 LD R0,R0_BACKUP_4200
 LD R1,R1_BACKUP_4200
 LD R7,R7_BACKUP_4200
 RET
 
+
+
+SINGLE_BIT_4200 .FILL x8000
 PTR_BUSYNESS_VEC_4200 .FILL x5000
+PTR_RIGHTSHIFT_4200 .FILL x4800
 PTR_BINOUT_4200 .FILL x4400
 
 R0_BACKUP_4200 .BLKW #1
@@ -354,14 +376,19 @@ ADD R0,R0,R2
 ;copy first dig to separate place 
 ADD R3,R0,#0
 
+
 GETC
 OUT
 
+;check if second num is enter
 LD R1,ASCII_ENTER_4400
 NOT R1,R1
 ADD R1,R1,#1
 ADD R1,R1,R0
 BRz ENTER_CASE_4400
+
+;convert second num to dec
+ADD R0,R0,R2
 
 ;straightline mult by 10
 ADD R1,R1,#0
@@ -378,7 +405,7 @@ BR FIN_4400
 ;entercase just skips multiplying to 10s place and places the first number entered back
 ;into position to be read
 ENTER_CASE_4400
-    ADD R0,R3,#0
+    ADD R1,R3,#0
 FIN_4400
 
 
@@ -414,9 +441,73 @@ R7_BACKUP_4400 .BLKW #1
 ; Return Value (R2): the number of the free machine
 ;-----------------------------------------------------------------------------------------------------------------
 
+;=================================================
+; SUB_RIGHT_SHIFT
+; input:         R5
+; postcondition: applies right shift to input
+; output:        R5
+;=================================================
+.orig x4800
+SUB_RIGHT_SHIFT
+    
+    ;store
+    ST R0,R0_BACKUP_4800
+    ST R1,R1_BACKUP_4800
+    ST R2,R2_BACKUP_4800
+    ST R3,R3_BACKUP_4800
+    ST R4,R4_BACKUP_4800
+    ST R7,R7_BACKUP_4800
+      
+      LD R1,FRONT_BIT
+      LD R2, DEC_15
+    FOREACH_2200
+      ADD R2,R2,#0
+      BRnz FIN_2200
+      ;check testval vs frotnt bit
+      AND R3,R5,R1
+      BRz ZERO_CASE
+      BR ONE_CASE
+
+      ;on each left shift we account for the truncated 0/1
+      ;by adding to the right end of the number the trunacted 0/1
+      ZERO_CASE
+        ADD R5,R5,R5
+        ADD R2,R2,#-1
+        BR FOREACH_2200
+
+      ONE_CASE
+        ADD R5,R5,R5
+        ADD R5,R5,#1
+        ADD R2,R2,#-1
+        BR FOREACH_2200
+      FIN_2200
+
+
+
+
+    LD R0,R0_BACKUP_4800
+    LD R1,R1_BACKUP_4800
+    LD R2,R2_BACKUP_4800
+    LD R3,R3_BACKUP_4800
+    LD R4,R4_BACKUP_4800
+    LD R7,R7_BACKUP_4800
+
+    RET
+
+;DATA
+DEC_15 .FILL #15
+FRONT_BIT .FILL x8000
+R0_BACKUP_4800 .BLKW #1
+R1_BACKUP_4800 .BLKW #1
+R2_BACKUP_4800 .BLKW #1
+R3_BACKUP_4800 .BLKW #1
+R4_BACKUP_4800 .BLKW #1
+R5_BACKUP_4800 .BLKW #1
+R6_BACKUP_4800 .BLKW #1
+R7_BACKUP_4800 .BLKW #1
 
 .orig x5000
-BUSYNESS .FILL x8000
+BUSYNESS .FILL x0006
 
 
 
