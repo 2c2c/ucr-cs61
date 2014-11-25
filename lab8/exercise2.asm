@@ -12,11 +12,13 @@
 ; main
 ;=================================================
 .orig x3000
-  
 
+LD R0,PTR_PRINTOPS_MAIN
+JSRR R0
 
 HALT
 
+PTR_PRINTOPS_MAIN .FILL x3200
 
 ;-----------------------------------------------------------------------------------------------
 ; Subroutine: SUB_PRINT_OPCODES
@@ -31,21 +33,71 @@ HALT
 ;-----------------------------------------------------------------------------------------------
 .orig x3200
 SUB_PRINT_OPCODES
+
+ST R0,R0_BACKUP_3200
+ST R1,R1_BACKUP_3200
+ST R2,R2_BACKUP_3200
+ST R3,R3_BACKUP_3200
+ST R4,R4_BACKUP_3200
 ST R7,R7_BACKUP_3200
 
+LD R2,PTR_NUM
+LD R3,PTR_OP
+
+FOREACHOP_3200
+  ;output name of OP
+  FOREACHCHAR_3200
+    LDR R0,R3,#0
+    BRz END_3200
+    BRn ENDFULL_3200
+    OUT
+    ADD R3,R3,#1
+    BR FOREACHCHAR_3200
+  END_3200
+
+  ;output ' = '
+  LEA R0,EQUALS
+  PUTS
+
+
+  ;output the opcode in binary
+  LD R4,PTR_NUM_FN
+  LDR R1,R2,#0
+  JSRR R4
+  ADD R2,R2,#1
+
+  ;newline
+  LD R0,NEWLINE
+  OUT
+  BR FOREACHOP_3200
+ENDFULL_3200
 
 
 
-PTR_NUM x3600
-PTR_OP x3800
+LD R0,R0_BACKUP_3200
+LD R1,R1_BACKUP_3200
+LD R2,R2_BACKUP_3200
+LD R3,R3_BACKUP_3200
+LD R4,R4_BACKUP_3200
 LD R7,R7_BACKUP_3200
 RET
 
+NEWLINE .FILL '\n'
+EQUALS .stringz " = "
+PTR_NUM_FN .FILL x3400
+PTR_NUM .FILL x3600
+PTR_OP .FILL x3800
+
+R0_BACKUP_3200 .BLKW #1
+R1_BACKUP_3200 .BLKW #1
+R2_BACKUP_3200 .BLKW #1
+R3_BACKUP_3200 .BLKW #1
+R4_BACKUP_3200 .BLKW #1
+R7_BACKUP_3200 .BLKW #1
+
 .orig x3600
-ADD1NUM .FILL #1
-ADD2NUM .FILL #1
-AND1NUM .FILL #5
-AND2NUM .FILL #5
+ADDNUM .FILL #1
+ANDNUM .FILL #5
 BRNUM .FILL #0
 JMPNUM .FILL #12
 JSRNUM .FILL #8
@@ -63,10 +115,8 @@ STRNUM .FILL #7
 TRAPNUM .FILL #15
 
 .orig x3800
-ADD1OP .stringz "ADD"
-ADD2OP .stringz "ADD"
-AND1OP .stringz "AND"
-AND2OP .stringz "AND"
+ADDOP .stringz "ADD"
+ANDOP .stringz "AND"
 BROP .stringz "BR"
 JMPOP .stringz "JMP"
 JSROP .stringz "JSR"
@@ -83,7 +133,7 @@ STIOP .stringz "STI"
 STROP .stringz "STR"
 TRAPOP .stringz "TRAP"
 ENDSTRINGZ_3200 .FILL "-1"
-R7_BACKUP_3200 .BLKW "#1"
+
 ;-----------------------------------------------------------------------------------------------
 ; Subroutine: SUB_AN_OP
 ; Parameters: R1
@@ -102,6 +152,9 @@ ST R7,R7_BACKUP_3400
 
 LD R2,FRONTBIT_3400
 LD R3,ASCII_OFFSET_3400
+
+;and input with ...1000
+;output the result converted to ascii
 AND R0,R1,R2
 ADD R0,R0,R3
 OUT
@@ -122,7 +175,17 @@ LD R3,R3_BACKUP_3400
 LD R7,R7_BACKUP_3400
 RET
 
-R7_BACKUP_3400 .BLKW "#1"
 
 ASCII_OFFSET_3400 .FILL 'x30'
-FRONTBIT_3400 .FILL #16
+FRONTBIT_3400 .FILL #8
+
+R0_BACKUP_3400 .BLKW #1
+R1_BACKUP_3400 .BLKW #1
+R2_BACKUP_3400 .BLKW #1
+R3_BACKUP_3400 .BLKW #1
+R4_BACKUP_3400 .BLKW #1
+R7_BACKUP_3400 .BLKW #1
+
+
+
+.end
