@@ -13,6 +13,8 @@
 ;=================================================
 .orig x3000
   
+  LEA R0,PROMPT
+  PUTS
     
   LD R0,PTR_STRING
   LD R1,PTR_GETSTR
@@ -28,6 +30,7 @@ HALT
 PTR_STRING .FILL x4000
 PTR_UPPER .FILL x3400
 PTR_GETSTR .FILL x3200
+PROMPT .STRINGZ "Input a string to uppercase\n"
 
 ;----------------------------------------------------------------------------------------------------------------
 ; Subroutine: SUB_GET_STRING
@@ -150,3 +153,6 @@ HIGHLIMIT_3400 .FILL -x7B
 
 .orig x4000
 EXAMPLE_STR .STRINGZ "`g oa{yz~"
+
+
+.end
