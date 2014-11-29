@@ -17,40 +17,65 @@ LD R1,PTR_BEGIN
 LD R2,PTR_TOP
 LD R3,CAPACITY
 
-LD R0,TEST_VAL
+LEA R0,MSG_PROMPT
+PUTS
+;push first num
+LD R5,ASCII_OFFSET_MAIN
+GETC
+OUT
+ADD R0,R0,R5
+LD R4,PTR_STACK_PUSH
+JSRR R4
+;ignore a space
+GETC
+OUT
+;push second num
+
+GETC
+OUT
+ADD R0,R0,R5
 LD R4,PTR_STACK_PUSH
 JSRR R4
 
-LD R0,TEST_VAL2
+;ignore a space
+GETC
+OUT
+
+;push *
+GETC
+OUT
 LD R4,PTR_STACK_PUSH
 JSRR R4
 
-LD R0,TEST_VAL3
-LD R4,PTR_STACK_PUSH
+;newline for output
+LD R0,ENTER_MAIN
+OUT
+
+LD R4,PTR_MULT
 JSRR R4
 
 LD R4,PTR_STACK_POP
 JSRR R4
-OUT
+ADD R6,R0,#0
 
-LD R4,PTR_STACK_POP
+LD R4,PTR_PRINT
 JSRR R4
-OUT
-
-LD R4,PTR_STACK_POP
-JSRR R4
-OUT
-
 HALT
 
-TEST_VAL .FILL 'a'
-TEST_VAL2 .FILL 'b'
-TEST_VAL3 .FILL 'c'
+TEST_VAL .FILL #8
+TEST_VAL2 .FILL #9
+TEST_VAL3 .FILL '*'
 PTR_BEGIN .FILL x4000
 PTR_TOP .FILL x4000
 CAPACITY .FILL #10
 PTR_STACK_PUSH .FILL x3200
-PTR_STACK_POP  .FILL x3400
+PTR_STACK_POP .FILL x3400
+PTR_MULT .FILL x3600
+PTR_PRINT .FILL x4800
+
+ENTER_MAIN .FILL '\n'
+ASCII_OFFSET_MAIN .FILL -x30
+MSG_PROMPT .STRINGZ "Insert 1digit mult e.g. '3 4 *'\n"
 .orig x4000
 ARRAY .BLKW #10
 
@@ -98,6 +123,7 @@ LD R7,R7_BACKUP_3200
 RET
 
 R7_BACKUP_3200 .BLKW #1
+MSG_OVERFLOW .STRINGZ "Overflow!\n"
 
 
 ;------------------------------------------------------------------------------------------------
@@ -117,19 +143,39 @@ SUB_STACK_POP
 
 ST R7,R7_BACKUP_3400
 
-;load value from top into target return register
-LDR R0,R2,#0
+;Flip Top and subtract with beginning address
+;if zero, top is at first position and we're trying to pop
+NOT R0,R2
+ADD R0,R0,#1
+ADD R0,R1,R0
+BRz CAPACITYEMPTY_3400
+BR NORMAL_3400
+
+
+CAPACITYEMPTY_3400
+    LEA R0,MSG_UNDERFLOW
+    PUTS
+    BR END_3400
+    
+NORMAL_3400
 
 ;decrement top
 ADD R2,R2,#-1
+
+;load value from top into target return register
+LDR R0,R2,#0
+
 
 ;increment capacity
 ADD R3,R3,#1
 
 
+END_3400
 LD R7,R7_BACKUP_3400
+RET
 
 R7_BACKUP_3400 .BLKW #1
+MSG_UNDERFLOW .STRINGZ "Underflow!\n"
 
 ;------------------------------------------------------------------------------------------------
 ; Subroutine: SUB_RPN_MULTIPLY 
@@ -145,308 +191,49 @@ R7_BACKUP_3400 .BLKW #1
 .orig x3600
 SUB_RPN_MULTIPLY
 
+
+ST R0,R0_BACKUP_3600
+ST R1,R1_BACKUP_3600
 ST R7,R7_BACKUP_3600
 
 
+LD R4,PTR_POP_3600
+;pop the *
+JSRR R4
+;pop the 2 numbers into proper registers
+JSRR R4
+ADD R5,R0,#0
+JSRR R4
+ADD R6,R0,#0
 
+;mult
+LD R4,PTR_MULT_3600
+JSRR R4
+
+;push result back into stack
+ADD R0,R6,#0
+LD R4,PTR_PUSH_3600
+JSRR R4
+
+LD R0,R0_BACKUP_3600
+LD R1,R1_BACKUP_3600
 LD R7,R7_BACKUP_3600
 
+RET
+
+R0_BACKUP_3600 .BLKW #1
+R1_BACKUP_3600 .BLKW #1
+R2_BACKUP_3600 .BLKW #1
+R3_BACKUP_3600 .BLKW #1
 R7_BACKUP_3600 .BLKW #1
 
-
-
-;=================================================
-; SUB_GET_MULT_TARGETS
-; input:         None
-; postcondition: Uses SUB_NUM_TO_REGISTER twice to get two numbers for multiplying
-; output:        R1 R2
-;=================================================
-.orig x3800
-SUB_GET_MULT_TARGETS
-;store
-ST R0,R0_BACKUP_3800
-ST R3,R3_BACKUP_3800
-ST R4,R4_BACKUP_3800
-ST R5,R5_BACKUP_3800
-ST R6,R6_BACKUP_3800
-ST R7,R7_BACKUP_3800
-
-;get number 1
-LD R0,NUM_TO_REG_PTR
-JSRR R0
-
-;store it elsewhere so funciton can be called again
-ADD R2,R1,#0
-
-;get number 2
-JSRR R0
+PTR_PUSH_3600 .FILL x3200
+PTR_POP_3600 .FILL x3400
+PTR_MULT_3600 .FILL x4400
+PTR_PRINT_3600 .FILL x4800
 
 
 
-LD R0,R0_BACKUP_3800
-LD R3,R3_BACKUP_3800
-LD R4,R4_BACKUP_3800
-LD R5,R5_BACKUP_3800
-LD R6,R6_BACKUP_3800
-LD R7,R7_BACKUP_3800
-
-RET
-
-
-R0_BACKUP_3800 .BLKW #1
-R3_BACKUP_3800 .BLKW #1
-R4_BACKUP_3800 .BLKW #1
-R5_BACKUP_3800 .BLKW #1
-R6_BACKUP_3800 .BLKW #1
-R7_BACKUP_3800 .BLKW #1
-NUM_TO_REG_PTR .FILL x4000
-
-;modify to an unused reg?
-; REG <- NUM_TO_REG
-; PUSH <- REG
-; PUSH <- REG2
-;=================================================
-; SUB_NUM_TO_REGISTER
-; input:         None
-; postcondition: Takes character input and creates literal number value
-;                in R1
-; output:        R1
-;=================================================
-.orig x4000
-SUB_NUM_TO_REGISTER
-    
-    ;store
-    ST R0,R0_BACKUP_4000
-    ST R2,R2_BACKUP_4000
-    ST R3,R3_BACKUP_4000
-    ST R4,R4_BACKUP_4000
-    ST R5,R5_BACKUP_4000
-    ST R6,R6_BACKUP_4000
-    ST R7,R7_BACKUP_4000
-    
-    ;begin by skipping over error msg
-    BR START
-    ;invalid input jumps to back to the beginning
-    ERROR
-    LEA R0,ERROR_MSG
-    PUTS
-    ;prompt
-    START
-    LEA R0,PROMPT
-    PUTS
-
-    LD R2,POINTER
-    LD R5, DEC_5
-    LD R3,MINUSSIGN
-    GETC
-    OUT
-    ;the input is either + - enter or a normal input
-    ;each has to be handled specifically
-    
-    ;checking if R0 was -
-    NOT R4,R0
-    ADD R4,R4,#1
-    ADD R1,R4,R3
-    BRz MINUSCASE
-    ;checking if R0 was +
-    LD R3,PLUSSIGN
-    ADD R1,R4,R3
-    BRz PLUSCASE
-    ;otherwise proceed
-    BR PROCEED
-
-    MINUSCASE
-        LD R6,MINUS_FLAG
-        GETC
-        OUT
-        BR BEGINLOOP
-    PLUSCASE
-        GETC
-        OUT
-        BR BEGINLOOP
-    PROCEED
-        BR BEGINLOOP
-    IN_WHILE
-        ;when entering the loop skip getting input
-        ;since im handling + - outside of loop
-        ;else it would cause errorenous handling
-        ;were one to enter 23-344 or something
-        GETC
-        OUT
-        ;starts here first iter
-        BEGINLOOP
-        ;enter
-        LD R3,ENTER
-        NOT R4,R0
-        ADD R4,R4,#1
-        ADD R1,R4,R3
-        BRz ENTERCASE
-        ;if it isnt + - or enter check if the value is >9 or <0
-        LD R4,UPPER_LIM
-        ADD R3,R0,R4
-        BRp ERROR
-        LD R4, LOWER_LIM
-        ADD R3,R0,R4
-        BRn ERROR
-
-        ;store
-        STR R0,R2,#0
-        ADD R2,R2,#1
-        ADD R5,R5,#-1
-    BRp IN_WHILE
-    ;the enter case skips to adding a null terminator
-    ;all cases procedurally get here after 5 number max is hit
-    ENTERCASE
-        LD R0,DEC_0
-        ;ISSUES HERE
-        STR R0,R2,#0
-            
-    LD R5, DEC_5
-    LD R2, POINTER
-    LD R3, DEC_0
-    ;calculation loop
-    LDR R1,R2,#0
-    ADD R2,R2,#1
-    ;convert ascii to decimal 
-    ADD R1,R1,#-12
-    ADD R1,R1,#-12
-    ADD R1,R1,#-12
-    ADD R1,R1,#-12 
-    CALC_WHILE
-        ;LD into R4, if its a null terminator get out
-        LDR R4,R2,#0
-        ADD R4,R4,#0
-        BRz CALC_DONE
-        ADD R2,R2,#1
-        ;convert ascii to decimal 
-        ADD R4,R4,#-12
-        ADD R4,R4,#-12
-        ADD R4,R4,#-12
-        ADD R4,R4,#-12 
-        ;mult by 10
-        ;store mult by 2 and add it to mult by 8
-        ADD R1,R1,R1
-        ADD R3,R1,#0
-        ADD R3,R3,R3
-        ADD R3,R3,R3
-        ADD R1,R1,R3
-        ADD R1,R4,R1
-        ;add the loading at the end of loop so we
-        ;can escape before multiplying 
-        BR CALC_WHILE
-    CALC_DONE
-    ;if negative flag is on 2's compliment to make it negative
-    ADD R6,R6,#0
-    BRp MAKE_NEGATIVE_4000
-    BR KEEP_4000
-    MAKE_NEGATIVE_4000
-        NOT R1,R1
-        ADD R1,R1,#1
-    KEEP_4000
-    LD R0,ENTER
-    OUT
-
-    ;restore
-    LD R0,R0_BACKUP_4000
-    LD R2,R2_BACKUP_4000
-    LD R3,R3_BACKUP_4000
-    LD R4,R4_BACKUP_4000
-    LD R5,R5_BACKUP_4000
-    LD R6,R6_BACKUP_4000
-    LD R7,R7_BACKUP_4000
-    ;return
-    RET
-
-;DATA
-R0_BACKUP_4000 .BLKW #1
-R1_BACKUP_4000 .BLKW #1
-R2_BACKUP_4000 .BLKW #1
-R3_BACKUP_4000 .BLKW #1
-R4_BACKUP_4000 .BLKW #1
-R5_BACKUP_4000 .BLKW #1
-R6_BACKUP_4000 .BLKW #1
-R7_BACKUP_4000 .BLKW #1
-POINTER .FILL x4000
-DEC_5 .FILL #5
-PROMPT .STRINGZ "Input 16bit int\n"
-ERROR_MSG .STRINGZ "Invalid input\n"
-MINUSSIGN .FILL '-'
-PLUSSIGN .FILL '+'
-MINUS_FLAG .FILL #1
-ENTER .FILL '\n'
-DEC_0 .FILL #0
-UPPER_LIM .FILL -x39
-LOWER_LIM .FILL -x30
-;=================================================
-; SUB_SWAP_DESCENDING
-; input:         R2 <- input 1
-;                R1 <- input 2   (I'm serious)
-; postcondition: places values of R1 and R2 such that R1 > R2
-;                strips signs and adds sign flag
-;
-; output:        R1 R2 R3
-;=================================================
-.orig x4200
-SUB_SWAP_DESCENDING
-
-ST R0,R0_BACKUP_4200
-ST R4,R4_BACKUP_4200
-ST R5,R5_BACKUP_4200
-ST R6,R6_BACKUP_4200
-ST R7,R7_BACKUP_4200
-
-;initialize R3 neg flag to 0
-AND R3,R3,#0
-;check if either are initially negs
-;flip them pos and adjust R3 sign appropriately
-ADD R1,R1,#0
-BRn R1_NEG_4200
-BR R1_POS_4200
-R1_NEG_4200
-  NOT R1,R1
-  ADD R1,R1,#1
-  ADD R3,R3,#1
-R1_POS_4200
-
-ADD R2,R2,#0
-BRn R2_NEG_4200
-BR R2_POS_4200
-R2_NEG_4200
-  NOT R2,R2
-  ADD R2,R2,#1
-  ADD R3,R3,#-1
-R2_POS_4200
-
-;flip R2 to be negative
-ADD R5,R2,#0
-NOT R5,R5
-ADD R5,R5,#1
-;R1 + -R2
-ADD R4,R5,R1
-
-BRn SWAP_4200
-BR KEEP_4200
-
-SWAP_4200
-  ADD R5,R2,#0
-  ADD R2,R1,#0
-  ADD R1,R5,#0
-KEEP_4200
-
-LD R0,R0_BACKUP_4200
-LD R4,R4_BACKUP_4200
-LD R5,R5_BACKUP_4200
-LD R6,R6_BACKUP_4200
-LD R7,R7_BACKUP_4200
-
-RET
-
-R0_BACKUP_4200 .BLKW #1
-R3_BACKUP_4200 .BLKW #1
-R4_BACKUP_4200 .BLKW #1
-R5_BACKUP_4200 .BLKW #1
-R6_BACKUP_4200 .BLKW #1
-R7_BACKUP_4200 .BLKW #1
 ;=================================================
 ; SUB_MULT
 ; input:         R1 R2 R3
@@ -464,6 +251,12 @@ ST R3,R3_BACKUP_4400
 ST R5,R5_BACKUP_4400
 ST R7,R7_BACKUP_4400
 
+;ghetto R1,R2 <- R5,R6
+ADD R1,R5,#0
+ADD R2,R6,#0
+;ghetto force neg flag to 0 since im stealing this fn from somewhere else
+; no need for neg flag
+AND R3,R3,#0
 AND R6,R6,#0
 
 LD R5,FRONT_BIT_4400

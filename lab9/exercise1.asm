@@ -20,6 +20,17 @@ LD R3,CAPACITY
 
 LD R4,PTR_STACK_PUSH
 JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+JSRR R4
+;one too many to test for overflow
+JSRR R4
 
 
 HALT
@@ -78,21 +89,6 @@ LD R7,R7_BACKUP_3200
 RET
 
 R7_BACKUP_3200 .BLKW #1
-
-
-;------------------------------------------------------------------------------------------------
-; Subroutine: SUB_STACK_POP 
-; Parameter (R1): stack_addr: A pointer to the beginning of the stack 
-; Parameter (R2): top: A pointer to the item to POP 
-; Parameter (R3): capacity: The # of additional items the stack can hold 
-; Postcondition: The subroutine has popped MEM[top] off of the stack. 
-;                If an underflow occurred, the subroutine has printed an 
-;                underflow error message and terminated. 
-; Return Value: R0 ← value popped off of the stack 
-;               R2 ← updated top value 
-;               R3 ← updated capacity value 
-;------------------------------------------------------------------------------------------------
-
-
+MSG_OVERFLOW .STRINGZ "Overflow!\n"
 
 .end

@@ -41,6 +41,10 @@ LD R4,PTR_STACK_POP
 JSRR R4
 OUT
 
+;one too many to check for underflow
+LD R4,PTR_STACK_POP
+JSRR R4
+
 HALT
 
 TEST_VAL .FILL 'a'
@@ -98,6 +102,7 @@ LD R7,R7_BACKUP_3200
 RET
 
 R7_BACKUP_3200 .BLKW #1
+MSG_OVERFLOW .STRINGZ "overflow"
 
 
 ;------------------------------------------------------------------------------------------------
@@ -117,17 +122,38 @@ SUB_STACK_POP
 
 ST R7,R7_BACKUP_3400
 
-;load value from top into target return register
-LDR R0,R2,#0
+;Flip Top and subtract with beginning address
+;if zero, top is at first position and we're trying to pop
+NOT R0,R2
+ADD R0,R0,#1
+ADD R0,R1,R0
+BRz CAPACITYEMPTY_3400
+BR NORMAL_3400
+
+
+CAPACITYEMPTY_3400
+    LEA R0,MSG_UNDERFLOW
+    PUTS
+    BR END_3400
+    
+NORMAL_3400
 
 ;decrement top
 ADD R2,R2,#-1
+
+;load value from top into target return register
+LDR R0,R2,#0
+
 
 ;increment capacity
 ADD R3,R3,#1
 
 
+END_3400
 LD R7,R7_BACKUP_3400
+RET
 
-R7_BACKUP_3200 .BLKW #1
+R7_BACKUP_3400 .BLKW #1
+MSG_UNDERFLOW .STRINGZ "Underflow!\n"
+
 .end
