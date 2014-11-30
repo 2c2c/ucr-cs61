@@ -363,14 +363,14 @@ JSRR R0
 ;fill front bit in register
 ;right shift n times where n is the bus requested
 LD R5,SINGLE_BIT_4200
-RIGHTSHIFT_4200
+LEFTSHIFT_4200
     ADD R1,R1,#0
     BRnz ENDSHIFT_4200
-    ;exec rightshift
-    LD R0,PTR_RIGHTSHIFT_4200
-    JSRR R0
+    ;exec LEFTSHIFT
+    ADD R5,R5,R5
+
     ADD R1,R1,#-1
-    BR RIGHTSHIFT_4200
+    BR LEFTSHIFT_4200
 ENDSHIFT_4200
 
 ;mask the shifted bit over busyvec to see if the bit is busy or not
@@ -408,7 +408,7 @@ RET
 
 
 
-SINGLE_BIT_4200 .FILL x8000
+SINGLE_BIT_4200 .FILL x0001
 PTR_BUSYNESS_VEC_4200 .FILL x5000
 PTR_RIGHTSHIFT_4200 .FILL x4800
 PTR_BINOUT_4200 .FILL x4400
@@ -879,6 +879,6 @@ MENUSTR_1 .STRINGZ "\n\n**********************\n* The Busyness Server*\n********
 ;
 
 .orig x5000
-BUSYNESS .FILL x0000
+BUSYNESS .FILL xF000
 
 .end
